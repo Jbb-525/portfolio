@@ -340,15 +340,90 @@
     .reveal { opacity:1; transform:none; transition:opacity .65s ease, transform .65s ease; }
     .reveal.hidden { opacity:0; transform:translateY(26px); }
 
+    /* ── HAMBURGER BUTTON (desktop: hidden) ── */
+    .nav-burger {
+      display: none;
+      background: none; border: none; cursor: pointer;
+      padding: 8px; color: var(--teal);
+      align-items: center; justify-self: end;
+    }
+    .nav-burger svg { display: block; }
+
+    /* ── MOBILE DROPDOWN MENU ── */
+    .nav-mobile-menu {
+      display: none;
+      position: fixed; top: 60px; left: 0; right: 0;
+      background: rgba(6,15,30,0.97); backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(186,230,253,0.14);
+      z-index: 199;
+      max-height: 0; overflow: hidden;
+      transition: max-height .3s ease;
+    }
+    .nav-mobile-menu.open { max-height: 400px; }
+    .nav-mobile-menu a {
+      display: block;
+      font-family: var(--m); font-size: 13px; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--stone); text-decoration: none;
+      padding: 15px 24px;
+      transition: color .2s, background .2s;
+    }
+    .nav-mobile-menu a:hover { color: var(--teal); background: rgba(186,230,253,.06); }
+    .nav-mobile-menu .nav-mob-email {
+      font-size: 12px; letter-spacing: .03em; text-transform: none;
+      color: var(--teal); font-weight: 400;
+      border-top: 1px solid rgba(186,230,253,.1);
+      margin-top: 4px; padding-top: 19px; padding-bottom: 19px;
+    }
+
     @media(max-width:960px){
       nav{padding:0 24px;} .nav-links{display:none;}
+      .nav-cta{display:none;}
+      .nav-burger{display:flex;}
+      .nav-mobile-menu{display:block;}
       #hero{padding:72px 20px 32px;} .hero-body{padding-top:32px;}
+      .hero-terminal{width:100%; max-width:360px;}
       .hero-right{display:none;}
       .mq-wrap{margin-top:28px;}
-      section{padding:72px 24px;}
+      section{padding:64px 20px;}
       .ei{grid-template-columns:1fr;gap:12px;}
-      .educard{grid-template-columns:1fr;}
-      footer{padding:36px 24px;}
+      .eb ul li{font-size:14px;}
+      .educard{grid-template-columns:1fr; padding:28px 20px;}
+      footer{padding:36px 20px;}
+      .flinks{gap:18px;}
+
+      /* ── Mobile accordion: projects ── */
+      .pc-desc { display:none; margin-bottom:0; }
+      .pc-desc.open { display:block; margin-bottom:20px; }
+      .pc-expand {
+        display:inline-flex; align-items:center; gap:5px;
+        font-family:var(--m); font-size:11px; letter-spacing:.06em;
+        color:var(--mist); cursor:pointer; margin-bottom:14px;
+        user-select:none; transition:color .2s;
+      }
+      .pc-expand svg { transition:transform .2s; flex-shrink:0; }
+      .pc-expand.open svg { transform:rotate(180deg); }
+      .pc-expand:hover { color:var(--teal); }
+
+      /* ── Mobile accordion: experience ── */
+      .eb-list { display:none; }
+      .eb-list.open { display:block; }
+      .ei-toggle {
+        display:inline-flex; align-items:center; gap:6px;
+        background:none; border:1px solid rgba(125,211,252,.3);
+        color:var(--mist); font-family:var(--m); font-size:11px;
+        letter-spacing:.06em; padding:6px 12px; border-radius:4px;
+        cursor:pointer; margin-bottom:16px;
+        transition:color .2s, border-color .2s;
+      }
+      .ei-toggle:hover { color:var(--teal); border-color:var(--teal); }
+      .ei-toggle svg { transition:transform .2s; flex-shrink:0; }
+      .ei-toggle.open svg { transform:rotate(180deg); }
+    }
+
+    /* Desktop: always visible, hide mobile toggles */
+    @media(min-width:961px){
+      .pc-expand, .ei-toggle { display:none !important; }
     }
   </style>
 </head>
@@ -363,7 +438,22 @@
     <li><a href="#education">Education</a></li>
   </ul>
   <a class="nav-cta" href="mailto:bj2414@nyu.edu">bj2414@nyu.edu</a>
+  <button class="nav-burger" id="navBurger" aria-label="Toggle menu" aria-expanded="false">
+    <svg id="burgerIcon" width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="3" y1="6"  x2="19" y2="6"/>
+      <line x1="3" y1="11" x2="19" y2="11"/>
+      <line x1="3" y1="16" x2="19" y2="16"/>
+    </svg>
+  </button>
 </nav>
+
+<div class="nav-mobile-menu" id="navMobileMenu">
+  <a href="#about"      onclick="closeMobileMenu()">About</a>
+  <a href="#experience" onclick="closeMobileMenu()">Experience</a>
+  <a href="#projects"   onclick="closeMobileMenu()">Projects</a>
+  <a href="#education"  onclick="closeMobileMenu()">Education</a>
+  <a href="mailto:bj2414@nyu.edu" class="nav-mob-email">bj2414@nyu.edu</a>
+</div>
 
 <!-- HERO -->
 <section id="hero">
@@ -581,6 +671,55 @@ function buildRow(id, skillPairs) {
   }
 }
 buildRow('row1', SKILLS);
+
+// Mobile accordion — projects & experience
+const chevronSVG = () => `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,4 6,8 10,4"/></svg>`;
+
+document.querySelectorAll('.pc').forEach(card => {
+  const desc = card.querySelector('p');
+  if (!desc) return;
+  desc.classList.add('pc-desc');
+  const btn = document.createElement('span');
+  btn.className = 'pc-expand';
+  btn.innerHTML = `Details ${chevronSVG()}`;
+  btn.addEventListener('click', e => {
+    e.preventDefault(); e.stopPropagation();
+    const open = desc.classList.toggle('open');
+    btn.classList.toggle('open', open);
+    btn.innerHTML = (open ? 'Less ' : 'Details ') + chevronSVG();
+  });
+  desc.insertAdjacentElement('afterend', btn);
+});
+
+document.querySelectorAll('.eb').forEach(eb => {
+  const ul = eb.querySelector('ul');
+  if (!ul) return;
+  ul.classList.add('eb-list');
+  const btn = document.createElement('button');
+  btn.className = 'ei-toggle';
+  btn.innerHTML = `Details ${chevronSVG()}`;
+  ul.insertAdjacentElement('beforebegin', btn);
+  btn.addEventListener('click', () => {
+    const open = ul.classList.toggle('open');
+    btn.classList.toggle('open', open);
+    btn.innerHTML = (open ? 'Less ' : 'Details ') + chevronSVG();
+  });
+});
+
+// Mobile nav toggle
+const navBurger = document.getElementById('navBurger');
+const navMobileMenu = document.getElementById('navMobileMenu');
+function closeMobileMenu() {
+  navMobileMenu.classList.remove('open');
+  navBurger.setAttribute('aria-expanded', 'false');
+}
+navBurger.addEventListener('click', () => {
+  const isOpen = navMobileMenu.classList.toggle('open');
+  navBurger.setAttribute('aria-expanded', isOpen);
+});
+document.addEventListener('click', e => {
+  if (!navBurger.contains(e.target) && !navMobileMenu.contains(e.target)) closeMobileMenu();
+});
 
 const io = new IntersectionObserver(entries => {
   entries.forEach(e => {
